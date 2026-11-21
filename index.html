@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" data-theme="midnight-tech">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bimal Global — Software Design, Engineering & Digital Products</title>
+    <meta
+      name="description"
+      content="Bimal Global designs, builds, and maintains business websites, full-stack web applications, mobile apps, and cloud infrastructure."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Bimal Global" />
+    <meta property="og:title" content="Bimal Global — Software Design, Engineering & Digital Products" />
+    <meta
+      property="og:description"
+      content="From business websites to full-stack platforms and mobile apps, we turn ideas into reliable digital experiences."
+    />
+    <meta property="og:url" content="https://bimalglobal.com/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Bimal Global — Software Design, Engineering & Digital Products" />
+    <meta
+      name="twitter:description"
+      content="From business websites to full-stack platforms and mobile apps, we turn ideas into reliable digital experiences."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      (function () {
+        try {
+          var valid = ['midnight-tech', 'clean-corporate', 'emerald-studio', 'slate-violet', 'warm-editorial'];
+          var saved = localStorage.getItem('bimal-global-theme');
+          var theme = valid.indexOf(saved) !== -1 ? saved : 'midnight-tech';
+          document.documentElement.setAttribute('data-theme', theme);
+          var isLight = theme === 'clean-corporate' || theme === 'warm-editorial';
+          if (isLight) {
+            document.documentElement.classList.remove('dark');
+          } else {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

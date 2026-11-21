@@ -1,0 +1,111 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root,
+[data-theme="midnight-tech"] {
+  --bg: #0B1220;
+  --surface: #162238;
+  --surface-elevated: #1D2C47;
+  --border: #243554;
+  --accent: #3B82F6;
+  --accent-hover: #60A5FA;
+  --accent-foreground: #0B1220;
+  --text: #F8FAFC;
+  --muted: #94A3B8;
+  color-scheme: dark;
+}
+
+[data-theme="clean-corporate"] {
+  --bg: #FFFFFF;
+  --surface: #F1F5F9;
+  --surface-elevated: #E2E8F0;
+  --border: #CBD5E1;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-foreground: #FFFFFF;
+  --text: #0F172A;
+  --muted: #64748B;
+  color-scheme: light;
+}
+
+[data-theme="emerald-studio"] {
+  --bg: #0C1715;
+  --surface: #172824;
+  --surface-elevated: #1F3630;
+  --border: #253D37;
+  --accent: #34D399;
+  --accent-hover: #6EE7B7;
+  --accent-foreground: #0C1715;
+  --text: #F0FDF4;
+  --muted: #9DB5AC;
+  color-scheme: dark;
+}
+
+[data-theme="slate-violet"] {
+  --bg: #11111B;
+  --surface: #202035;
+  --surface-elevated: #282842;
+  --border: #2E2E4A;
+  --accent: #A78BFA;
+  --accent-hover: #C4B5FD;
+  --accent-foreground: #11111B;
+  --text: #F8F7FF;
+  --muted: #A5A3BC;
+  color-scheme: dark;
+}
+
+[data-theme="warm-editorial"] {
+  --bg: #FAF8F4;
+  --surface: #F0EBE3;
+  --surface-elevated: #E7DFD3;
+  --border: #DDD3C5;
+  --accent: #A65E39;
+  --accent-hover: #8E4E2E;
+  --accent-foreground: #FAF8F4;
+  --text: #292524;
+  --muted: #78716C;
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    color: var(--text);
+  }
+
+  code, pre, .font-mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
