@@ -5,7 +5,8 @@ Minimalist software development agency website for **Bimal Global** (`https://bi
 ## Architecture Overview
 
 - **Frontend**: React 19, TypeScript, Tailwind CSS v4, Radix UI primitives, React Router, Motion (`reducedMotion="user"`), React Hook Form + Zod, and Firebase Auth for Google Sheets OAuth.
-- **Backend Server (`server.ts`)**: Express server serving `/api/enquiry`, `/api/sheets/*`, `/sitemap.xml`, `/robots.txt`, and static assets / Vite middleware on port `3000`.
+- **Backend Server (`server.ts`)**: Express server serving `/api/enquiry` and `/api/sheets/*` plus static assets / Vite middleware on port `3000`. `public/robots.txt` and `public/sitemap.xml` are served directly in development and production.
+- **Search indexing**: The sitemap lists the canonical public pages and current case studies at `https://bimalglobal.com`; it intentionally excludes the no-index `/enquiries` page and API routes. Update the sitemap when public routes or case-study slugs change.
 - **Centralized Content**: All agency copy, navigation, services, projects, team, partners, testimonials, FAQs, SEO configs, and 5 color themes live in `src/data/*` with strict interfaces in `src/types/*`.
 - **Enquiry Storage**: `POST /api/enquiry` validates inputs with Zod, checks honeypot, enforces per-IP rate limiting and duplicate protection, neutralizes spreadsheet formula prefixes, and writes directly to a connected Google Sheet (via `/enquiries` Google Sign-In) or forwards over HTTPS to a Google Apps Script Web App (`apps-script/Code.gs`) using a server-only shared secret.
 

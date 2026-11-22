@@ -21,13 +21,6 @@ const ipRequestLog = new Map<string, number[]>();
 const DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
 const recentSubmissionHashes = new Map<string, number>();
 
-const PROJECT_SLUGS = [
-  'client-operations-portal-template',
-  'b2b-corporate-web-platform-template',
-  'field-inspection-mobile-app-template',
-  'multi-theme-design-system-template',
-];
-
 function getClientIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.trim()) {
@@ -294,19 +287,6 @@ async function ensureEnquiryHeaderRow(
   }
 
   return { ok: true, status: 200 };
-}
-
-function getBaseUrl(req: Request): string {
-  const envUrl = process.env.APP_URL?.trim();
-  if (envUrl && /^https?:\/\//i.test(envUrl)) {
-    return envUrl.replace(/\/+$/, '');
-  }
-  const host = req.get('host');
-  if (host) {
-    const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
-    return `${proto}://${host}`.replace(/\/+$/, '');
-  }
-  return 'https://bimalglobal.com';
 }
 
 async function startServer() {
@@ -1062,39 +1042,6 @@ async function startServer() {
         message: 'Upstream connection failed.',
       });
     }
-  });
-
-  app.get('/robots.txt', (req: Request, res: Response) => {
-    const baseUrl = getBaseUrl(req);
-    res.type('text/plain').send(
-      [
-        'User-agent: *',
-        'Allow: /',
-        'Disallow: /api/',
-        '',
-        `Sitemap: ${baseUrl}/sitemap.xml`,
-      ].join('\n'),
-    );
-  });
-
-  app.get('/sitemap.xml', (req: Request, res: Response) => {
-    const baseUrl = getBaseUrl(req);
-    const staticPaths = ['/', '/work', '/about', '/contact', '/privacy', '/terms'];
-    const allPaths = [
-      ...staticPaths,
-      ...PROJECT_SLUGS.map((slug) => `/work/${slug}`),
-    ];
-
-    const urlEntries = allPaths
-      .map(
-        (routePath) =>
-          `  <url>\n    <loc>${baseUrl}${routePath}</loc>\n    <changefreq>monthly</changefreq>\n    <priority>${routePath === '/' ? '1.0' : '0.8'}</priority>\n  </url>`,
-      )
-      .join('\n');
-
-    res.type('application/xml').send(
-      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urlEntries}\n</urlset>`,
-    );
   });
 
   if (!IS_PROD) {
