@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +16,6 @@ import {
 } from '@/src/components/ui/select';
 import { Textarea } from '@/src/components/ui/textarea';
 import { ErrorState } from '@/src/components/ErrorState';
-import { useSheets } from '@/src/context/SheetsContext';
 import { enquirySchema, type EnquirySchemaInput } from '@/src/lib/validation/enquiry';
 import type { EnquiryApiResponse } from '@/src/types';
 
@@ -43,19 +42,12 @@ export function ContactForm({
   idPrefix = 'enquiry',
   onSubmitted,
 }: ContactFormProps) {
-  const {
-    accessToken,
-    connectedSheet,
-    appsScriptConfigured,
-    markTokenExpired,
-  } = useSheets();
-
   const [submitResult, setSubmitResult] = useState<{
     status: 'idle' | 'submitting' | 'success' | 'error';
     message?: string;
     referenceId?: string;
-    code?: string;
   }>({ status: 'idle' });
+  const submissionInProgress = useRef(false);
 
   const matchedInitialService =
     initialService && serviceOptions.includes(initialService)
@@ -90,37 +82,27 @@ export function ContactForm({
   }, [matchedInitialService, setValue]);
 
   const onSubmit = async (values: EnquirySchemaInput) => {
+    if (submissionInProgress.current) return;
+    submissionInProgress.current = true;
     setSubmitResult({ status: 'submitting' });
 
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      if (accessToken && connectedSheet) {
-        headers.Authorization = `Bearer ${accessToken}`;
-        headers['x-sheet-id'] = connectedSheet.spreadsheetId;
-        headers['x-sheet-name'] = connectedSheet.sheetName;
-      }
-
       const response = await fetch('/api/enquiry', {
         method: 'POST',
-        headers,
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(values),
       });
 
-      const payload = (await response.json()) as EnquiryApiResponse;
+      const payload = (await response.json().catch(() => null)) as
+        | EnquiryApiResponse
+        | null;
 
-      if (!response.ok || !payload.ok) {
-        if (payload.code === 'AUTH_EXPIRED') {
-          markTokenExpired();
-        }
+      if (!response.ok || !payload?.ok) {
         setSubmitResult({
           status: 'error',
-          code: payload.code,
           message:
-            payload.error ||
-            payload.message ||
+            payload?.error ||
+            payload?.message ||
             'Your enquiry could not be recorded at this time. Please retry or reach out directly via email.',
         });
         return;
@@ -152,6 +134,8 @@ export function ContactForm({
         message:
           'Network error while submitting your enquiry. Please check your connection or email us directly.',
       });
+    } finally {
+      submissionInProgress.current = false;
     }
   };
 
@@ -226,17 +210,6 @@ export function ContactForm({
           description={submitResult.message}
           action={
             <div className="flex flex-wrap items-center gap-4">
-              {(submitResult.code === 'SHEET_NOT_CONNECTED' ||
-                submitResult.code === 'AUTH_EXPIRED') && (
-                <Link
-                  to="/enquiries"
-                  className="inline-block text-xs font-medium text-[var(--accent)] underline underline-offset-4"
-                >
-                  {submitResult.code === 'AUTH_EXPIRED'
-                    ? 'Reconnect Google Sheets'
-                    : 'Connect Google Sheet'}
-                </Link>
-              )}
               <a
                 href={`mailto:${fallbackEmail}`}
                 className="inline-block text-xs font-medium text-[var(--accent)] underline underline-offset-4"
@@ -437,29 +410,9 @@ export function ContactForm({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
           <FileSpreadsheet className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
-          {accessToken && connectedSheet ? (
-            <span>
-              Saving to{' '}
-              <Link
-                to="/enquiries"
-                className="font-medium text-[var(--text)] underline underline-offset-4 hover:text-[var(--accent)]"
-              >
-                {connectedSheet.spreadsheetTitle} ({connectedSheet.sheetName})
-              </Link>
-            </span>
-          ) : appsScriptConfigured ? (
-            <span>Enquiries sync to Bimal Global Google Sheets.</span>
-          ) : (
-            <span>
-              <Link
-                to="/enquiries"
-                className="font-medium text-[var(--text)] underline underline-offset-4 hover:text-[var(--accent)]"
-              >
-                Connect Google Sheet
-              </Link>{' '}
-              to record enquiries directly.
-            </span>
-          )}
+          <span>
+            Submitted securely; confirmation appears only after your enquiry is saved.
+          </span>
         </div>
 
         <Button

@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { MotionConfig } from 'motion/react';
 import { ThemeProvider } from '@/src/context/ThemeContext';
-import { SheetsProvider } from '@/src/context/SheetsContext';
 import { Header } from '@/src/components/Header';
 import { Footer } from '@/src/components/Footer';
 import { EnquiryPopup } from '@/src/components/EnquiryPopup';
@@ -11,12 +10,15 @@ import { WorkPage } from '@/src/pages/WorkPage';
 import { CaseStudyPage } from '@/src/pages/CaseStudyPage';
 import { AboutPage } from '@/src/pages/AboutPage';
 import { ContactPage } from '@/src/pages/ContactPage';
-import { EnquiriesPage } from '@/src/pages/EnquiriesPage';
 import { PrivacyPage } from '@/src/pages/PrivacyPage';
 import { TermsPage } from '@/src/pages/TermsPage';
 import { NotFoundPage } from '@/src/pages/NotFoundPage';
 import { navigationConfig } from '@/src/data/navigation';
 import { siteConfig } from '@/src/data/site';
+
+const AdminEnquiriesRoute = lazy(
+  () => import('@/src/pages/AdminEnquiriesRoute'),
+);
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
@@ -39,8 +41,7 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <ThemeProvider>
-        <SheetsProvider>
-          <BrowserRouter>
+        <BrowserRouter>
             <ScrollToTop />
             <div className="flex min-h-screen flex-col bg-[var(--bg)] text-[var(--text)]">
               <a
@@ -63,7 +64,20 @@ export default function App() {
                   <Route path="/work/:slug" element={<CaseStudyPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/enquiries" element={<EnquiriesPage />} />
+                  <Route
+                    path="/enquiries"
+                    element={
+                      <Suspense
+                        fallback={
+                          <p className="p-8 text-sm text-[var(--muted)]">
+                            Loading admin tools...
+                          </p>
+                        }
+                      >
+                        <AdminEnquiriesRoute />
+                      </Suspense>
+                    }
+                  />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="*" element={<NotFoundPage />} />
@@ -83,8 +97,7 @@ export default function App() {
             />
           </div>
           <EnquiryPopup />
-          </BrowserRouter>
-        </SheetsProvider>
+        </BrowserRouter>
       </ThemeProvider>
     </MotionConfig>
   );

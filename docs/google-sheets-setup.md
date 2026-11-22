@@ -1,69 +1,60 @@
-# Google Sheets Enquiry Integration Guide
+# Google Sheets Enquiry Integration
 
-This document explains how to connect the `/api/enquiry` endpoint to a private Google Sheet using Google Apps Script without exposing credentials in browser code.
+The public contact form posts to the same-origin `/api/enquiry` endpoint. The server validates and forwards enquiries to a Google Apps Script Web App; visitors do not sign in with Google. The optional `/enquiries` admin console still uses Google OAuth independently.
 
-## 1. Spreadsheet Setup
+## 1. Bind Apps Script to the Existing Spreadsheet
 
-1. Create a new Google Sheet in your studio Google Drive (e.g., `Bimal Global Enquiries`).
-2. Leave the sheet empty or create a tab named `Enquiries`.
-   The Apps Script automatically creates and freezes the header row if missing:
-   `Timestamp | Name | Email | Phone | Service | Budget | Message | Consent | Source | Status | Reference ID`
+Use the existing target Google Sheet so its data is preserved. Open that spreadsheet and choose **Extensions -> Apps Script**. Replace the script contents with `apps-script/Code.gs` and save.
 
-## 2. Apps Script Installation
+The script uses the bound spreadsheet and the `Enquiries` worksheet by default. For deterministic web-app access, add `ENQUIRY_SPREADSHEET_ID` as a Script Property containing the ID from the URL of the **existing** target spreadsheet. Set the optional `ENQUIRY_SHEET_NAME` property only if its worksheet has another name. If the headers are missing or differ, the script inserts the expected header row above existing data rather than replacing that data:
 
-1. In your Google Sheet, open **Extensions -> Apps Script**.
-2. Replace the default editor contents with `apps-script/Code.gs` from this repository.
-3. Save the project (e.g., `Bimal Global Enquiry Receiver`).
+`Timestamp | Name | Email | Phone | Service | Budget | Message | Consent | Source | Status | Reference ID`
 
-## 3. Configure Script Properties (Secret)
+## 2. Configure and Deploy the Web App
 
-1. Generate a high-entropy random secret (at least 32 characters), for example:
+1. Generate a high-entropy secret (at least 32 random bytes), for example:
    ```bash
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
-2. In Apps Script, go to **Project Settings -> Script Properties -> Add script property**:
-   - Property: `ENQUIRY_SHARED_SECRET`
-   - Value: `<your-generated-secret>`
-3. Optional: add `ENQUIRY_SHEET_NAME` (defaults to `Enquiries`).
+2. In Apps Script **Project Settings -> Script Properties**, add `ENQUIRY_SHARED_SECRET` with that secret. Never put it in `Code.gs`.
+3. Deploy the script as a **Web app**, with **Execute as: Me** and **Who has access: Anyone**. The script runs as the spreadsheet owner and only accepts POSTs carrying the shared secret.
+4. Authorize the requested Google Sheets permission, then copy the deployment URL ending in `/exec`.
 
-## 4. Deploy as a Web App
+The Apps Script URL is not the secret. Keep the shared secret only in Script Properties and the server environment.
 
-1. Click **Deploy -> New deployment**.
-2. Select type **Web app**.
-3. Set:
-   - **Execute as**: `Me`
-   - **Who has access**: `Anyone`
-4. Authorize the script permissions when prompted (Google Sheets read/write access for the active spreadsheet).
-5. Copy the resulting `https://script.google.com/macros/s/.../exec` Web App URL.
+## 3. Configure Vercel
 
-## 5. Server Environment Variables
+Vercel automatically detects `api/enquiry.ts`; no cross-origin or CORS configuration is needed because the form calls `/api/enquiry` on its own domain.
 
-Add the following server-only variables in your hosting environment (or `.env` locally — never commit `.env`):
+In the Vercel project, open **Settings -> Environment Variables** and add these unprefixed variables for **Production**:
 
 ```env
 GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
-GOOGLE_APPS_SCRIPT_SECRET=your_matching_secret
+GOOGLE_APPS_SCRIPT_SECRET=the_same_secret_as_ENQUIRY_SHARED_SECRET
 ```
 
-Never prefix these variables with `VITE_` or `NEXT_PUBLIC_`.
+Use the exact same secret in Vercel and Apps Script. Do not use `VITE_` or `NEXT_PUBLIC_` prefixes. `APP_URL` may remain configured for other site functionality; it is not required by the enquiry endpoint. Redeploy after changing Vercel environment variables. For local testing, add the same two values to the existing `.env` without replacing other values or committing the file.
 
-## 6. Testing the Integration
+## 4. Local and Automated Tests
 
-1. Test the API directly using `curl`:
-   ```bash
-   curl -X POST http://localhost:3000/api/enquiry \
-     -H "Content-Type: application/json" \
-     -d '{
-       "name": "Test Client",
-       "email": "test@example.com",
-       "phone": "",
-       "service": "Full-Stack Web Applications",
-       "budget": "₹20,000 – ₹35,000",
-       "message": "Testing end-to-end validation and Google Sheets write confirmation.",
-       "consent": true,
-       "website": ""
-     }'
-   ```
-2. Verify HTTP `201` with `{ "ok": true, "referenceId": "BG-..." }` and confirm a new row appeared in the Google Sheet.
-3. Verify honeypot rejection by sending `"website": "https://spam.example"` (expects HTTP `400`).
-4. Verify duplicate guard by sending the exact same payload twice within 5 minutes (expects HTTP `409`).
+Run the code-level checks:
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+For a local end-to-end test, run `npm run dev`, submit a clearly labelled test enquiry on `http://localhost:3000/contact`, and verify its row in the existing sheet. Use test data you are comfortable storing. A successful response is HTTP `201`; the form only shows success after Apps Script confirms the write.
+
+To check invalid submissions without writing to the sheet, POST malformed data to `/api/enquiry` and expect HTTP `400`. A filled `website` honeypot is also rejected with HTTP `400`. Repeating a successful submission with the same email, service, and message within five minutes returns HTTP `409` and does not append another row. Automated Apps Script tests also cover invalid shared secrets and duplicate detection without contacting Google.
+
+## 5. Production Verification
+
+After deployment, verify `https://bimalglobal.com/api/enquiry` responds to a non-POST request with HTTP `405`, then submit one labelled test enquiry through the production contact form and confirm the row appears in the sheet. This production test writes real data; remove the test row afterward if desired.
+
+If the form reports a save error, check the Vercel Function logs for the request status/reference ID and confirm that the Vercel secret exactly matches the Apps Script Script Property. The API does not return the secret or internal error details to the visitor.
+
+## 6. Google OAuth Warning
+
+Public contact submissions do not use Firebase or Google OAuth. The `/enquiries` admin console still uses the Google Sheets OAuth scope. In Firebase Authentication, authorize the exact production domains (`bimalglobal.com` and `www.bimalglobal.com`). In Google Auth Platform, keep the consent screen in **Testing** and add only the administrator account as a test user until the app is verified. Google may continue to show its unverified-app warning to that administrator; do not bypass the warning. Public visitors should use only the Contact page and never need to authorize Google.

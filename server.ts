@@ -1,69 +1,15 @@
 import 'dotenv/config';
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { enquirySchema } from './src/lib/validation/enquiry.ts';
+import { submitEnquiry } from './src/server/enquiry.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
-
-// Sliding-window IP rate limiter: max 5 submissions per 10 minutes
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = 5;
-const ipRequestLog = new Map<string, number[]>();
-
-// Duplicate submission window: 5 minutes
-const DUPLICATE_WINDOW_MS = 5 * 60 * 1000;
-const recentSubmissionHashes = new Map<string, number>();
-
-function getClientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.ip || 'unknown';
-}
-
-function isRateLimited(ip: string, now: number): { limited: boolean; retryAfterSec: number } {
-  const timestamps = (ipRequestLog.get(ip) ?? []).filter(
-    (ts) => now - ts < RATE_LIMIT_WINDOW_MS,
-  );
-  if (timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
-    const oldest = timestamps[0];
-    const retryAfterSec = Math.max(1, Math.ceil((RATE_LIMIT_WINDOW_MS - (now - oldest)) / 1000));
-    ipRequestLog.set(ip, timestamps);
-    return { limited: true, retryAfterSec };
-  }
-  timestamps.push(now);
-  ipRequestLog.set(ip, timestamps);
-  return { limited: false, retryAfterSec: 0 };
-}
-
-function pruneExpiredHashes(now: number) {
-  for (const [hash, ts] of recentSubmissionHashes.entries()) {
-    if (now - ts >= DUPLICATE_WINDOW_MS) {
-      recentSubmissionHashes.delete(hash);
-    }
-  }
-}
-
-/**
- * Neutralizes spreadsheet formula injection prefixes (=, +, -, @, tab, CR)
- * before forwarding text values to Google Sheets.
- */
-function sanitizeSheetCell(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return '';
-  if (/^[=+\-@\t\r]/.test(trimmed)) {
-    return `'${trimmed}`;
-  }
-  return trimmed;
-}
 
 const ENQUIRY_HEADERS = [
   'Timestamp',
@@ -748,7 +694,7 @@ async function startServer() {
 
   app.post('/api/enquiry', async (req: Request, res: Response) => {
     const contentType = req.headers['content-type'] ?? '';
-    if (!contentType.includes('application/json')) {
+    if (!contentType.toLowerCase().includes('application/json')) {
       res.status(415).json({
         ok: false,
         error: 'Unsupported content type. Use application/json.',
@@ -757,293 +703,30 @@ async function startServer() {
       return;
     }
 
-    const now = Date.now();
-    const clientIp = getClientIp(req);
-    const rateCheck = isRateLimited(clientIp, now);
-    if (rateCheck.limited) {
-      res.setHeader('Retry-After', String(rateCheck.retryAfterSec));
-      res.status(429).json({
-        ok: false,
-        error: 'Too many enquiry attempts. Please wait a few minutes before retrying.',
-        message: 'Rate limit exceeded.',
-      });
-      return;
-    }
-
-    const parsed = enquirySchema.safeParse(req.body);
-    if (!parsed.success) {
-      const fieldErrors: Record<string, string> = {};
-      for (const issue of parsed.error.issues) {
-        const key = String(issue.path[0] ?? 'form');
-        if (!fieldErrors[key]) {
-          fieldErrors[key] = issue.message;
-        }
-      }
-      res.status(400).json({
-        ok: false,
-        error: parsed.error.issues[0]?.message || 'Please check the highlighted form fields.',
-        message: 'Validation failed.',
-        fieldErrors,
-      });
-      return;
-    }
-
-    const data = parsed.data;
-
-    // Honeypot check: reject automated bot submissions without forwarding
-    if (data.website && data.website.trim().length > 0) {
-      res.status(400).json({
-        ok: false,
-        error: 'Enquiry submission could not be processed.',
-        message: 'Submission rejected.',
-      });
-      return;
-    }
-
-    // Duplicate submission protection
-    pruneExpiredHashes(now);
-    const dedupeHash = crypto
-      .createHash('sha256')
-      .update(
-        `${data.email.toLowerCase()}|${data.service.toLowerCase()}|${data.message.trim()}`,
-      )
-      .digest('hex');
-
-    if (recentSubmissionHashes.has(dedupeHash)) {
-      res.status(409).json({
-        ok: false,
-        error:
-          'This enquiry was already submitted moments ago. Our team has received your message.',
-        message: 'Duplicate submission prevented.',
-      });
-      return;
-    }
-
-    const referenceId = `BG-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-    const timestamp = new Date(now).toISOString();
-
-    const sanitizedFields = {
-      timestamp,
-      name: sanitizeSheetCell(data.name),
-      email: sanitizeSheetCell(data.email),
-      phone: sanitizeSheetCell(data.phone || ''),
-      service: sanitizeSheetCell(data.service),
-      budget: sanitizeSheetCell(data.budget || 'Not specified'),
-      message: sanitizeSheetCell(data.message),
-      consent: 'Confirmed',
-      source: 'bimalglobal.com/contact',
-      status: 'New',
-      referenceId,
-    };
-
-    // Priority 1: Direct Google Sheets API write when authenticated owner session + connected sheet headers are present
-    const bearerToken = extractBearerToken(req);
-    const rawHeaderSheetId = String(req.headers['x-sheet-id'] ?? '');
-    const headerSpreadsheetId = parseSpreadsheetId(rawHeaderSheetId);
-
-    if (bearerToken && headerSpreadsheetId) {
-      try {
-        let targetSheetName = String(req.headers['x-sheet-name'] ?? '').trim();
-        let targetSheetId: number | undefined;
-
-        const meta = await fetchSpreadsheetMetadata(headerSpreadsheetId, bearerToken);
-        if (!meta.ok || !meta.data) {
-          const statusCode = meta.status === 401 || meta.status === 403 ? 401 : 502;
-          res.status(statusCode).json({
-            ok: false,
-            code: statusCode === 401 ? 'AUTH_EXPIRED' : 'SHEETS_ERROR',
-            error:
-              statusCode === 401
-                ? 'Your Google Sheets session has expired. Please sign in again on the Enquiry Sheet page and retry.'
-                : 'Could not verify the connected Google Sheet. Please check your sheet connection.',
-            message: 'Google Sheets connection error.',
-          });
-          return;
-        }
-
-        const matchedTab = targetSheetName
-          ? meta.data.sheets?.find((s) => s.properties?.title === targetSheetName)
-          : meta.data.sheets?.[0];
-
-        if (!matchedTab?.properties?.title) {
-          res.status(400).json({
-            ok: false,
-            error: 'The selected Google Sheet tab was not found. Please reconnect your tab on the Enquiry Sheet page.',
-            message: 'Sheet tab not found.',
-          });
-          return;
-        }
-
-        targetSheetName = matchedTab.properties.title;
-        targetSheetId = matchedTab.properties.sheetId;
-
-        await ensureEnquiryHeaderRow(
-          headerSpreadsheetId,
-          targetSheetName,
-          targetSheetId,
-          bearerToken,
-          false,
-        );
-
-        const appendRange = encodeURIComponent(
-          `${quoteSheetName(targetSheetName)}!A:K`,
-        );
-        const appendRes = await googleSheetsFetch(
-          `https://sheets.googleapis.com/v4/spreadsheets/${headerSpreadsheetId}/values/${appendRange}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-          bearerToken,
-          {
-            method: 'POST',
-            body: JSON.stringify({
-              majorDimension: 'ROWS',
-              values: [
-                [
-                  sanitizedFields.timestamp,
-                  sanitizedFields.name,
-                  sanitizedFields.email,
-                  sanitizedFields.phone,
-                  sanitizedFields.service,
-                  sanitizedFields.budget,
-                  sanitizedFields.message,
-                  sanitizedFields.consent,
-                  sanitizedFields.source,
-                  sanitizedFields.status,
-                  sanitizedFields.referenceId,
-                ],
-              ],
-            }),
-          },
-        );
-
-        if (!appendRes.ok) {
-          const statusCode =
-            appendRes.status === 401 || appendRes.status === 403 ? 401 : 502;
-          res.status(statusCode).json({
-            ok: false,
-            code: statusCode === 401 ? 'AUTH_EXPIRED' : 'SHEETS_ERROR',
-            error:
-              statusCode === 401
-                ? 'Your Google Sheets session expired. Please reconnect your Google account and retry.'
-                : 'We could not append your enquiry to Google Sheets. Please try again.',
-            message: 'Google Sheets write failed.',
-          });
-          return;
-        }
-
-        recentSubmissionHashes.set(dedupeHash, now);
-        res.status(201).json({
-          ok: true,
-          message:
-            'Thank you. Your enquiry has been recorded in Google Sheets and our engineering team will respond within 1–2 business days.',
-          referenceId,
-        });
-        return;
-      } catch {
-        res.status(502).json({
-          ok: false,
-          error:
-            'Unable to reach Google Sheets right now. Please try again shortly or email us directly.',
-          message: 'Google Sheets connection failed.',
-        });
-        return;
-      }
-    }
-
-    // Priority 2: Server-configured Google Apps Script webhook (for unattended public submissions)
-    const appsScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL?.trim();
-    const appsScriptSecret = process.env.GOOGLE_APPS_SCRIPT_SECRET?.trim();
-
-    if (!appsScriptUrl || !appsScriptSecret) {
-      res.status(503).json({
-        ok: false,
-        code: 'SHEET_NOT_CONNECTED',
-        error:
-          'Google Sheets is not connected yet. Connect your Google Sheet on the Enquiry Sheet page (or configure GOOGLE_APPS_SCRIPT_URL on the server).',
-        message: 'Enquiry integration not configured.',
-      });
-      return;
-    }
-
-    let validatedEndpoint: URL;
-    try {
-      validatedEndpoint = new URL(appsScriptUrl);
-    } catch {
-      res.status(500).json({
-        ok: false,
-        error: 'Server enquiry configuration is invalid.',
-        message: 'Invalid Google Apps Script URL.',
-      });
-      return;
-    }
-
-    if (validatedEndpoint.protocol !== 'https:') {
-      res.status(500).json({
-        ok: false,
-        error: 'Enquiry endpoint must use HTTPS.',
-        message: 'Insecure endpoint rejected.',
-      });
-      return;
-    }
-
-    const sheetPayload = {
-      secret: appsScriptSecret,
-      ...sanitizedFields,
-    };
+    const forwardedFor = req.headers['x-forwarded-for'];
+    const clientIp =
+      (typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : '') ||
+      req.ip ||
+      'unknown';
 
     try {
-      const upstreamResponse = await fetch(validatedEndpoint.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sheetPayload),
-        signal: AbortSignal.timeout(10000),
-      });
-
-      const upstreamText = await upstreamResponse.text();
-      let upstreamJson: { ok?: boolean; error?: string; referenceId?: string } | null = null;
-      try {
-        upstreamJson = JSON.parse(upstreamText) as {
-          ok?: boolean;
-          error?: string;
-          referenceId?: string;
-        };
-      } catch {
-        upstreamJson = null;
+      const result = await submitEnquiry(req.body, clientIp);
+      if (result.retryAfterSeconds) {
+        res.setHeader('Retry-After', String(result.retryAfterSeconds));
       }
-
-      if (!upstreamResponse.ok || !upstreamJson || upstreamJson.ok !== true) {
-        console.error('[enquiry] Upstream sheet write rejected', {
-          status: upstreamResponse.status,
-          referenceId,
-        });
-        res.status(502).json({
-          ok: false,
-          error:
-            'We could not confirm storage of your enquiry in Google Sheets. Please try again or email us directly.',
-          message: 'Upstream write not confirmed.',
-        });
-        return;
-      }
-
-      recentSubmissionHashes.set(dedupeHash, now);
-
-      res.status(201).json({
-        ok: true,
-        message:
-          'Thank you. Your enquiry has been recorded and our engineering team will respond within 1–2 business days.',
-        referenceId: upstreamJson.referenceId || referenceId,
+      res.status(result.statusCode).json(result.body);
+    } catch (error) {
+      console.error('[enquiry] Express handler failed', {
+        error: error instanceof Error ? error.name : 'UnknownError',
       });
-    } catch {
-      console.error('[enquiry] Upstream request failed', { referenceId });
-      res.status(502).json({
+      res.status(500).json({
         ok: false,
-        error:
-          'Unable to reach the enquiry storage service right now. Please try again shortly or email us directly.',
-        message: 'Upstream connection failed.',
+        code: 'INTERNAL_ERROR',
+        error: 'We could not process your enquiry. Please email us directly.',
+        message: 'Internal enquiry service error.',
       });
     }
   });
-
   if (!IS_PROD) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({

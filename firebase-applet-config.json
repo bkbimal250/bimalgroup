@@ -1,11 +1,9 @@
 {
-  "projectId": "gen-lang-client-0312708233",
-  "appId": "1:271478609710:web:f005c52617a87e1cf70cbf",
-  "apiKey": "AIzaSyCqkpVma3oMByQA2W-0gJj97XFzv8uxIQA",
-  "authDomain": "gen-lang-client-0312708233.firebaseapp.com",
-  "storageBucket": "gen-lang-client-0312708233.firebasestorage.app",
-  "messagingSenderId": "271478609710",
-  "measurementId": "",
-  "oAuthClientId": "271478609710-7klu0do8ulh79lq2610nj17jn0pt5bn1.apps.googleusercontent.com",
-  "recaptchaSiteKey": ""
+  "apiKey": "AIzaSyAS6MQAWo25lmBVLdzxtgZjq4b21ix6xrs",
+  "authDomain": "bimalglobal-349e0.firebaseapp.com",
+  "projectId": "bimalglobal-349e0",
+  "storageBucket": "bimalglobal-349e0.firebasestorage.app",
+  "messagingSenderId": "198003104729",
+  "appId": "1:198003104729:web:97dc8b6d807a7eca3757c8",
+  "measurementId": "G-QWPE0X082P"
 }

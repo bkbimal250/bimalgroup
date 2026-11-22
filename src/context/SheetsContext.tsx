@@ -51,7 +51,6 @@ interface SheetsContextValue {
   needsAuth: boolean;
   isLoggingIn: boolean;
   authError: string | null;
-  appsScriptConfigured: boolean;
   connectedSheet: ConnectedSheetConfig | null;
   handleSignIn: () => Promise<string | null>;
   handleLogout: () => Promise<void>;
@@ -69,7 +68,6 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
   const [needsAuth, setNeedsAuth] = useState<boolean>(true);
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [appsScriptConfigured, setAppsScriptConfigured] = useState<boolean>(false);
   const [connectedSheet, setConnectedSheet] =
     useState<ConnectedSheetConfig | null>(() =>
       typeof window !== 'undefined' ? readStoredSheetConfig() : null,
@@ -90,23 +88,6 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
       },
     );
     return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    fetch('/api/health')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { appsScriptConfigured?: boolean } | null) => {
-        if (active && data && typeof data.appsScriptConfigured === 'boolean') {
-          setAppsScriptConfigured(data.appsScriptConfigured);
-        }
-      })
-      .catch(() => {
-        // Ignore transient health errors
-      });
-    return () => {
-      active = false;
-    };
   }, []);
 
   const persistSheetConfig = useCallback(
@@ -182,7 +163,6 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
       needsAuth,
       isLoggingIn,
       authError,
-      appsScriptConfigured,
       connectedSheet,
       handleSignIn,
       handleLogout,
@@ -197,7 +177,6 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
       needsAuth,
       isLoggingIn,
       authError,
-      appsScriptConfigured,
       connectedSheet,
       handleSignIn,
       handleLogout,
