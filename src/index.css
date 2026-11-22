@@ -1,0 +1,212 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root,
+[data-theme="midnight-tech"] {
+  --bg: #0B1220;
+  --surface: #162238;
+  --surface-elevated: #1D2C47;
+  --border: #243554;
+  --accent: #3B82F6;
+  --accent-hover: #60A5FA;
+  --accent-foreground: #0B1220;
+  --text: #F8FAFC;
+  --muted: #94A3B8;
+  color-scheme: dark;
+}
+
+[data-theme="clean-corporate"] {
+  --bg: #FFFFFF;
+  --surface: #F1F5F9;
+  --surface-elevated: #E2E8F0;
+  --border: #CBD5E1;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-foreground: #FFFFFF;
+  --text: #0F172A;
+  --muted: #64748B;
+  color-scheme: light;
+}
+
+[data-theme="emerald-studio"] {
+  --bg: #0C1715;
+  --surface: #172824;
+  --surface-elevated: #1F3630;
+  --border: #253D37;
+  --accent: #34D399;
+  --accent-hover: #6EE7B7;
+  --accent-foreground: #0C1715;
+  --text: #F0FDF4;
+  --muted: #9DB5AC;
+  color-scheme: dark;
+}
+
+[data-theme="slate-violet"] {
+  --bg: #11111B;
+  --surface: #202035;
+  --surface-elevated: #282842;
+  --border: #2E2E4A;
+  --accent: #A78BFA;
+  --accent-hover: #C4B5FD;
+  --accent-foreground: #11111B;
+  --text: #F8F7FF;
+  --muted: #A5A3BC;
+  color-scheme: dark;
+}
+
+[data-theme="warm-editorial"] {
+  --bg: #FAF8F4;
+  --surface: #F0EBE3;
+  --surface-elevated: #E7DFD3;
+  --border: #DDD3C5;
+  --accent: #A65E39;
+  --accent-hover: #8E4E2E;
+  --accent-foreground: #FAF8F4;
+  --text: #292524;
+  --muted: #78716C;
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    color: var(--text);
+  }
+
+  code, pre, .font-mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.gsi-material-button {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-appearance: none;
+  background-color: #ffffff;
+  background-image: none;
+  border: 1px solid #747775;
+  -webkit-border-radius: 8px;
+  border-radius: 8px;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: "DM Sans", Roboto, Arial, sans-serif;
+  font-size: 14px;
+  height: 40px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 14px;
+  position: relative;
+  text-align: center;
+  -webkit-transition: background-color 0.218s, border-color 0.218s, box-shadow 0.218s;
+  transition: background-color 0.218s, border-color 0.218s, box-shadow 0.218s;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: auto;
+  max-width: 400px;
+  min-width: min-content;
+}
+
+.gsi-material-button .gsi-material-button-icon {
+  height: 20px;
+  margin-right: 12px;
+  min-width: 20px;
+  width: 20px;
+}
+
+.gsi-material-button .gsi-material-button-content-wrapper {
+  -webkit-align-items: center;
+  align-items: center;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button .gsi-material-button-contents {
+  -webkit-flex-grow: 1;
+  flex-grow: 1;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.gsi-material-button .gsi-material-button-state {
+  -webkit-transition: opacity 0.218s;
+  transition: opacity 0.218s;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.gsi-material-button:disabled {
+  cursor: default;
+  background-color: #ffffff99;
+  border-color: #1f1f1f1f;
+}
+
+.gsi-material-button:disabled .gsi-material-button-contents,
+.gsi-material-button:disabled .gsi-material-button-icon {
+  opacity: 0.38;
+}
+
+.gsi-material-button:not(:disabled):active .gsi-material-button-state,
+.gsi-material-button:not(:disabled):focus .gsi-material-button-state {
+  background-color: #303030;
+  opacity: 0.12;
+}
+
+.gsi-material-button:not(:disabled):hover {
+  -webkit-box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+}
+
+.gsi-material-button:not(:disabled):hover .gsi-material-button-state {
+  background-color: #303030;
+  opacity: 0.08;
+}
+
