@@ -26,6 +26,13 @@ function jsonResponse(payload) {
   );
 }
 
+function doGet() {
+  return jsonResponse({
+    ok: true,
+    service: 'Bimal Global enquiry receiver',
+  });
+}
+
 function sanitizeCell(value) {
   if (value === null || value === undefined) return '';
   var str = String(value).trim();

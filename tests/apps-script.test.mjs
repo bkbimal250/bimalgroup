@@ -86,6 +86,10 @@ function createAppsScript(secret, scriptProperties = {}) {
     get openedSpreadsheetId() {
       return openedSpreadsheetId;
     },
+    get: () =>
+      JSON.parse(
+        sandbox.doGet().text,
+      ),
     post: (payload) =>
       JSON.parse(
         sandbox
@@ -115,6 +119,15 @@ test('Apps Script rejects an invalid shared secret without writing a row', () =>
   assert.equal(result.ok, false);
   assert.equal(result.error, 'Unauthorized request.');
   assert.equal(app.rows.length, 0);
+});
+
+test('Apps Script responds to deployed health checks', () => {
+  const app = createAppsScript(validEnquiry.secret);
+  assert.equal(
+    typeof app.get,
+    'function',
+  );
+  assert.deepEqual(app.get(), { ok: true, service: 'Bimal Global enquiry receiver' });
 });
 
 test('Apps Script creates headers, appends the mapped enquiry, and blocks duplicates', () => {
