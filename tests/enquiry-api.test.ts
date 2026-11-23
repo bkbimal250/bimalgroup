@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import handler from '../api/enquiry.ts';
+import handler from '../legacy/api/enquiry.ts';
 
 interface MockResponse {
   statusCode?: number;

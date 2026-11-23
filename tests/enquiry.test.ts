@@ -10,6 +10,7 @@ const validPayload = {
   budget: 'Not specified',
   message: 'A valid contact request with enough detail.',
   consent: true,
+  companyFax: '',
   website: '',
 };
 
@@ -17,6 +18,25 @@ const configuredEnv = {
   GOOGLE_APPS_SCRIPT_URL: 'https://script.google.com/macros/s/test-deployment/exec',
   GOOGLE_APPS_SCRIPT_SECRET: 'test-secret-that-is-never-returned',
 };
+
+test('rejects a filled contact-form honeypot without contacting Apps Script', async () => {
+  let fetchCalled = false;
+  const result = await submitEnquiry(
+    { ...validPayload, companyFax: 'autofilled.example.com' },
+    'test-filled-honeypot',
+    {
+      env: configuredEnv,
+      fetcher: async () => {
+        fetchCalled = true;
+        return new Response('{}');
+      },
+    },
+  );
+
+  assert.equal(result.statusCode, 400);
+  assert.equal(result.body.error, 'Enquiry submission could not be processed.');
+  assert.equal(fetchCalled, false);
+});
 
 test('rejects invalid form data without contacting Apps Script', async () => {
   let fetchCalled = false;

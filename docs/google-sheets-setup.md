@@ -1,60 +1,59 @@
-# Google Sheets Enquiry Integration
+# SheetDB contact form (static frontend)
 
-The public contact form posts to the same-origin `/api/enquiry` endpoint. The server validates and forwards enquiries to a Google Apps Script Web App; visitors do not sign in with Google. The optional `/enquiries` admin console still uses Google OAuth independently.
+The contact page and enquiry popup use `src/lib/sheetdb.ts` to POST directly from React to:
 
-## 1. Bind Apps Script to the Existing Spreadsheet
+`https://sheetdb.io/api/v1/azmq62vz2k6uf`
 
-Use the existing target Google Sheet so its data is preserved. Open that spreadsheet and choose **Extensions -> Apps Script**. Replace the script contents with `apps-script/Code.gs` and save.
+No custom backend, Firebase login, Google Apps Script, API key, or environment variable is required for public submissions. The endpoint is intentionally visible in browser code. Vite environment variables are not secret storage.
 
-The script uses the bound spreadsheet and the `Enquiries` worksheet by default. For deterministic web-app access, add `ENQUIRY_SPREADSHEET_ID` as a Script Property containing the ID from the URL of the **existing** target spreadsheet. Set the optional `ENQUIRY_SHEET_NAME` property only if its worksheet has another name. If the headers are missing or differ, the script inserts the expected header row above existing data rather than replacing that data:
+## Existing spreadsheet mapping
 
-`Timestamp | Name | Email | Phone | Service | Budget | Message | Consent | Source | Status | Reference ID`
+The endpoint's `/keys` response was inspected on 2026-11-23. These are its exact headers; the sheet and its headers were not changed:
 
-## 2. Configure and Deploy the Web App
+| Sheet header | Value |
+| --- | --- |
+| Timestamp | Current ISO date/time (there is no `Date` column) |
+| Name | Validated name |
+| Email | Validated email |
+| Phone | Optional phone or empty string |
+| Service | Selected service |
+| Budget | Optional budget or empty string |
+| Message | Project overview |
+| Consent | Yes after required consent validation |
+| Source | Website |
+| Status | New |
+| Reference ID | Browser-generated UUID |
 
-1. Generate a high-entropy secret (at least 32 random bytes), for example:
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-   ```
-2. In Apps Script **Project Settings -> Script Properties**, add `ENQUIRY_SHARED_SECRET` with that secret. Never put it in `Code.gs`.
-3. Deploy the script as a **Web app**, with **Execute as: Me** and **Who has access: Anyone**. The script runs as the spreadsheet owner and only accepts POSTs carrying the shared secret.
-4. Authorize the requested Google Sheets permission, then copy the deployment URL ending in `/exec`.
+The JSON body is `{ data: [row], mode: 'RAW' }`. RAW preserves input as text, including phone prefixes and text beginning with `=`. See [SheetDB create](https://docs.sheetdb.io/sheetdb-api/create) and [value input options](https://docs.sheetdb.io/value-render-input-option).
 
-The Apps Script URL is not the secret. Keep the shared secret only in Script Properties and the server environment.
+Success requires both an HTTP success status and a JSON response containing numeric `created: 1`. Only then is the form reset. Errors retain entered values. A submission guard and disabled submit button prevent simultaneous requests from this form. Requests time out after 20 seconds; uncertain outcomes are not retried automatically because a write may have succeeded before its response was lost. Client validation and honeypots do not prevent direct API abuse or provide server-side deduplication.
 
-## 3. Configure Vercel
+## Production security blocker
 
-Vercel automatically detects `api/enquiry.ts`; no cross-origin or CORS configuration is needed because the form calls `/api/enquiry` on its own domain.
+On 2026-11-23, an unauthenticated GET with `?limit=1` returned HTTP 200 and `Access-Control-Allow-Origin: *`. After the test submission, unauthenticated `/search` returned the test row. Public read/search access is therefore confirmed. Do not deploy this integration as production-ready with these permissions.
 
-In the Vercel project, open **Settings -> Environment Variables** and add these unprefixed variables for **Production**:
+In the SheetDB dashboard, enable only **Create (POST)** and disable Read, Search, Update, Delete, and other unused operations. [SheetDB's permissions documentation](https://docs.sheetdb.io/permissions) recommends create-only access for forms and specifies HTTP 403 for disabled operations. Configure appropriate browser origins, but do not treat CORS as authentication or protection against direct HTTP clients. Public create access still permits spam and quota consumption.
 
-```env
-GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
-GOOGLE_APPS_SCRIPT_SECRET=the_same_secret_as_ENQUIRY_SHARED_SECRET
-```
+Update/delete permissions were not tested with mutation requests, to preserve existing data. No dashboard permission change was made. Verify those settings and recheck denied read/search access before production approval. No private credentials should be added to the frontend.
 
-Use the exact same secret in Vercel and Apps Script. Do not use `VITE_` or `NEXT_PUBLIC_` prefixes. `APP_URL` may remain configured for other site functionality; it is not required by the enquiry endpoint. Redeploy after changing Vercel environment variables. For local testing, add the same two values to the existing `.env` without replacing other values or committing the file.
-
-## 4. Local and Automated Tests
-
-Run the code-level checks:
+## Local development and hosting
 
 ```bash
+npm run dev
 npm test
 npm run lint
 npm run build
 ```
 
-For a local end-to-end test, run `npm run dev`, submit a clearly labelled test enquiry on `http://localhost:3000/contact`, and verify its row in the existing sheet. Use test data you are comfortable storing. A successful response is HTTP `201`; the form only shows success after Apps Script confirms the write.
+Open `http://localhost:3000/contact`. The dev command runs Vite directly; `npm start` previews a built static site. Vercel uses Vite, `npm run build`, and `dist`. SPA rewrites preserve direct React Router navigation; `/api/*` is excluded to avoid returning misleading HTML responses.
 
-To check invalid submissions without writing to the sheet, POST malformed data to `/api/enquiry` and expect HTTP `400`. A filled `website` honeypot is also rejected with HTTP `400`. Repeating a successful submission with the same email, service, and message within five minutes returns HTTP `409` and does not append another row. Automated Apps Script tests also cover invalid shared secrets and duplicate detection without contacting Google.
+The old enquiry function was moved from `api/enquiry.ts` to `legacy/api/enquiry.ts` so Vercel will not auto-deploy it. Existing server, Apps Script, and admin code/tests are retained for unrelated legacy functionality and pre-existing work, but are not used by the contact form or static startup. The separate `/enquiries` admin console retains its existing OAuth UI; it relies on legacy server routes and is not made functional by this frontend-only integration. Public contact and popup forms contain no Google sign-in UI or Firebase dependency.
 
-## 5. Production Verification
+## Verification performed
 
-After deployment, verify `https://bimalglobal.com/api/enquiry` responds to a non-POST request with HTTP `405`, then submit one labelled test enquiry through the production contact form and confirm the row appears in the sheet. This production test writes real data; remove the test row afterward if desired.
-
-If the form reports a save error, check the Vercel Function logs for the request status/reference ID and confirm that the Vercel secret exactly matches the Apps Script Script Property. The API does not return the secret or internal error details to the visitor.
-
-## 6. Google OAuth Warning
-
-Public contact submissions do not use Firebase or Google OAuth. The `/enquiries` admin console still uses the Google Sheets OAuth scope. In Firebase Authentication, authorize the exact production domains (`bimalglobal.com` and `www.bimalglobal.com`). In Google Auth Platform, keep the consent screen in **Testing** and add only the administrator account as a test user until the app is verified. Google may continue to show its unverified-app warning to that administrator; do not bypass the warning. Public visitors should use only the Contact page and never need to authorize Google.
+- All 20 automated tests passed, including exact SheetDB mapping, validation, honeypots, HTTP errors, missing/malformed confirmation, and network errors.
+- `npm run lint` and `npm run build` passed. Existing Vite configuration and chunk-size warnings remain.
+- Local headless Edge browser verified validation, disabled loading button, preserved values after HTTP/network/JSON errors, success display, and reset after confirmed success.
+- One live browser submission returned HTTP 201 and `{ "created": 1 }`. A subsequent search verified the saved row, including the phone prefix and consent.
+- Test row: **Bimal Global Integration Test**, email `sheetdb-test@example.com`, reference **7f962ef2-eb38-46ba-9734-16d8c5ffd985**. It is clearly marked TEST ONLY and remains in the sheet. Existing data was not modified or deleted.
+- Nothing was pushed or deployed.

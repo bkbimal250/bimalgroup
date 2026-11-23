@@ -114,7 +114,7 @@ export async function submitEnquiry(
   }
 
   const data = parsed.data;
-  if (data.website?.trim()) {
+  if (data.companyFax?.trim() || data.website?.trim()) {
     return {
       statusCode: 400,
       body: {

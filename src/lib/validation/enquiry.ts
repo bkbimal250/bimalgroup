@@ -40,6 +40,7 @@ export const enquirySchema = z.object({
     .refine((val) => val === true, {
       message: 'Please confirm consent so we can process and respond to your enquiry.',
     }),
+  companyFax: z.string().max(200).optional(),
   website: z.string().max(200).optional(),
 });
 

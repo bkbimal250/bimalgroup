@@ -1,4 +1,4 @@
-import { submitEnquiry } from '../src/server/enquiry.ts';
+import { submitEnquiry } from '../../src/server/enquiry.ts';
 
 interface VercelRequest {
   method?: string;

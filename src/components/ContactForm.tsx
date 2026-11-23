@@ -17,7 +17,7 @@ import {
 import { Textarea } from '@/src/components/ui/textarea';
 import { ErrorState } from '@/src/components/ErrorState';
 import { enquirySchema, type EnquirySchemaInput } from '@/src/lib/validation/enquiry';
-import type { EnquiryApiResponse } from '@/src/types';
+import { submitSheetDbEnquiry } from '@/src/lib/sheetdb';
 
 interface ContactFormProps {
   serviceOptions: string[];
@@ -71,6 +71,7 @@ export function ContactForm({
       budget: '',
       message: '',
       consent: false,
+      companyFax: '',
       website: '',
     },
   });
@@ -87,33 +88,12 @@ export function ContactForm({
     setSubmitResult({ status: 'submitting' });
 
     try {
-      const response = await fetch('/api/enquiry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-
-      const payload = (await response.json().catch(() => null)) as
-        | EnquiryApiResponse
-        | null;
-
-      if (!response.ok || !payload?.ok) {
-        setSubmitResult({
-          status: 'error',
-          message:
-            payload?.error ||
-            payload?.message ||
-            'Your enquiry could not be recorded at this time. Please retry or reach out directly via email.',
-        });
-        return;
-      }
+      const referenceId = await submitSheetDbEnquiry(values);
 
       setSubmitResult({
         status: 'success',
-        message:
-          payload.message ||
-          'Thank you. Your project enquiry has been recorded and our team will respond shortly.',
-        referenceId: payload.referenceId,
+        message: 'Thank you. Your project enquiry has been recorded and our team will respond shortly.',
+        referenceId,
       });
 
       onSubmitted?.();
@@ -126,13 +106,14 @@ export function ContactForm({
         budget: '',
         message: '',
         consent: false,
+        companyFax: '',
         website: '',
       });
-    } catch {
+    } catch (error) {
       setSubmitResult({
         status: 'error',
         message:
-          'Network error while submitting your enquiry. Please check your connection or email us directly.',
+          error instanceof Error ? error.message : 'Unable to confirm your enquiry was saved. Please email us directly.',
       });
     } finally {
       submissionInProgress.current = false;
@@ -186,6 +167,7 @@ export function ContactForm({
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
+      aria-busy={submitResult.status === 'submitting'}
       className={
         embedded
           ? 'space-y-5'
@@ -194,13 +176,13 @@ export function ContactForm({
     >
       {/* Hidden honeypot input for automated bot detection */}
       <div className="sr-only" aria-hidden="true">
-        <label htmlFor={`${idPrefix}-website`}>Company Website</label>
+        <label htmlFor={`${idPrefix}-company-fax`}>Leave this field empty</label>
         <input
-          id={`${idPrefix}-website`}
+          id={`${idPrefix}-company-fax`}
           type="text"
           tabIndex={-1}
-          autoComplete="off"
-          {...register('website')}
+          autoComplete="new-password"
+          {...register('companyFax')}
         />
       </div>
 
@@ -411,7 +393,7 @@ export function ContactForm({
         <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
           <FileSpreadsheet className="h-3.5 w-3.5 shrink-0 text-[var(--accent)]" aria-hidden="true" />
           <span>
-            Submitted securely; confirmation appears only after your enquiry is saved.
+            Confirmation appears only after your enquiry is saved.
           </span>
         </div>
 

@@ -6,6 +6,7 @@ export interface EnquiryFormValues {
   budget?: string;
   message: string;
   consent: boolean;
+  companyFax?: string;
   website?: string; // Honeypot field
 }
 
