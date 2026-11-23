@@ -1,156 +1,358 @@
 import type { ProjectFilterOption, ProjectItem } from '@/src/types';
 
+/**
+ * Bimal Global portfolio projects.
+ *
+ * Editorial notes:
+ * - These are real projects identified by the portfolio owner, not sample case studies.
+ * - Confirm project years, exact responsibilities, technologies and production features
+ *   against each project's codebase before publishing more specific claims.
+ * - Add verified screenshots to /public/images/projects/ and update screenshots arrays.
+ * - GitHub links are stored in sourceUrl; see the note below if ProjectItem has no sourceUrl.
+ * - No invented testimonials, metrics, client contracts or private deployment URLs.
+ */
+
 export const projectFilterOptions: ProjectFilterOption[] = [
   { value: 'all', label: 'All Projects' },
   { value: 'websites', label: 'Websites' },
   { value: 'full-stack', label: 'Full-Stack Applications' },
   { value: 'mobile', label: 'Mobile Apps' },
   { value: 'ui-ux', label: 'UI/UX' },
+ 
 ];
 
 /**
- * Editable portfolio project entries.
- * NOTE: Entries marked `isPlaceholder: true` are realistic sample structures clearly
- * labeled for replacement with verified client work and real screenshot paths in /public/images/projects/.
+ * Existing ProjectItem fields are preserved for drop-in compatibility.
+ * Add desktop to the ProjectItem category union and projectFilterOptions if you
+ * want a dedicated Desktop Applications filter for PIXINIT.
  */
 export const projectsData: ProjectItem[] = [
+ 
   {
-    id: 'proj-sample-portal',
-    slug: 'client-operations-portal-template',
-    title: 'Operations & Document Workflow Portal (Sample Case Study)',
+    id: 'proj-mastercall',
+    slug: 'mastercall-lead-management',
+    title: 'MasterCall – Call Tracking & Lead Management',
     category: 'full-stack',
     categoryLabel: 'Full-Stack Applications',
-    year: '2026',
-    clientType: 'Sample B2B Services Engagement',
+    year: '2026', // TODO: Confirm launch year
+    clientType: 'Business Communications & CRM',
     shortSummary:
-      'Placeholder case study demonstrating how Bimal Global documents full-stack portals: request intake, approval queues, and audit-ready export workflows.',
+      'A live business platform focused on call tracking and lead management.',
     businessProblem:
-      'Placeholder problem statement: Replace this section with the actual client workflow bottleneck—such as fragmented spreadsheet tracking, manual email approvals, or slow status visibility across teams.',
+      'Businesses need a more structured way to follow up on incoming calls and customer leads.',
     solution:
-      'Placeholder engineering solution: Detail the typed web architecture, role-based views, server validation, and automated notifications implemented to replace manual steps.',
-    role: 'End-to-end architecture, UI system, and full-stack TypeScript implementation',
-    stack: ['Next.js', 'TypeScript', 'Tailwind CSS', 'PostgreSQL', 'Zod'],
+      'A dedicated call-tracking and lead-management web experience. Specific integrations, reporting and automation capabilities should be confirmed before publication.',
+    role: 'Web application development; confirm specific responsibilities',
+    stack: [
+
+      'Python', 'PostgreSQL', 'JavaScript', 'React', 'Django REST Framework', 'Celery', 'Redis', 'Docker', 'Nginx', 'Git', 'GitHub Actions', 'Twilio', 'firebase', 'kotlin','jetpack compose', 'android studio', 'java', 'kotlin coroutines', 'kotlin flow', 'koin', 'retrofit', 'okhttp', 'glide', 'room database', 'firebase cloud messaging'
+
+    ], // TODO: Confirm from repository
     features: [
-      'Role-scoped request submission and multi-step status tracking',
-      'Validated form workflows with keyboard-first table filtering',
-      'Structured CSV export and clean activity history',
+      'Call-tracking-focused business workflow',
+      'Lead management and follow-up automation',
+      'Lead management positioning',
+      'Business-oriented web interface',
+      'Mobile application for call tracking and lead management',
+      'multi-tenant architecture for multiple businesses to manage their leads and calls separately',
     ],
     screenshots: [
       {
-        src: '/images/projects/sample-portal-overview.png',
-        alt: 'Placeholder frame for full-stack operations portal overview interface',
-        caption: 'Primary operational workspace layout (add verified screenshot at /public/images/projects/)',
-        aspect: '16:10',
+        src: '/images/projects/dashboardanalytics.png',
+        alt: 'MasterCall dashboard analytics',
+        caption: 'Dashboard analytics',
       },
       {
-        src: '/images/projects/sample-portal-detail.png',
-        alt: 'Placeholder frame for request review detail view',
-        caption: 'Structured review and approval drawer view',
-        aspect: '16:10',
-      },
+        src: '/images/projects/MasterCall Glassmorphism Features Grid.png',
+        alt: 'MasterCall Glassmorphism Features Grid',
+        caption: 'Glassmorphism Features Grid',
+      }
     ],
-    isPrivate: true,
-    privateNote: 'Internal client application — live URL restricted under NDA.',
+    liveUrl: 'https://mastercall.in/',
     featured: true,
-    isPlaceholder: true,
+    isPlaceholder: false,
   },
   {
-    id: 'proj-sample-website',
-    slug: 'b2b-corporate-web-platform-template',
-    title: 'Corporate Web Presence & Enquiry Pipeline (Sample Case Study)',
+    id: 'proj-spaadvisor',
+    slug: 'spaadvisor-wellness-discovery',
+    title: 'SpaAdvisor – Spa & Wellness Discovery',
+    category: 'full-stack',
+    categoryLabel: 'Full-Stack Applications',
+    year: '2025', // TODO: Confirm launch year
+    clientType: 'Spa & Wellness Industry',
+    shortSummary:
+      'A live spa discovery platform helping customers explore wellness businesses, services and booking options.',
+    businessProblem:
+      'Customers need an easier way to find and compare spa services, while businesses need a discoverable online presence.',
+    solution:
+      'Built a spa-focused platform centered on business listings, service discovery and enquiry or booking-oriented customer journeys.',
+    role: 'Web application development; confirm specific responsibilities',
+    stack: ['React', 'Node.js', 'MongoDB', 'Express', 'Redux', 'Material-UI', 'AWS S3', 'Docker', 'Nginx', 'Git', 'GitHub Actions','socket.io','payment gateway integration','sms gateway integration','email gateway integration','crm integration,whatsapp integration'
+    ], // Based on previously discussed SpaAdvisor codebase; verify current deployment
+    features: [
+      'Spa business listings and detail pages',
+      'Service and location-oriented discovery',
+      'Search and listing navigation',
+      'Booking or enquiry calls to action',
+    ],
+    screenshots: [
+      {
+        src: '/images/projects/spaadvisor.png',
+        alt: 'SpaAdvisor dashboard',
+        caption: 'SpaAdvisor dashboard',
+      }
+      
+    ],
+    liveUrl: 'https://spaadvisor.in/',
+    featured: true,
+    isPlaceholder: false,
+  },
+
+   {
+    id: 'proj-bookby247',
+    slug: 'bookby247-booking-platform',
+    title: 'BookBy247 – Booking & Business Management Platform',
+    category: 'full-stack',
+    categoryLabel: 'Full-Stack Applications',
+    year: '2026', // TODO: Confirm launch year
+    clientType: 'Beauty, Spa & Wellness Businesses',
+    shortSummary:
+      'A live booking-oriented platform for spa, salon and beauty businesses, bringing service discovery and appointment-related experiences together.',
+    businessProblem:
+      'Service businesses need a convenient digital way to present their offerings and support customer booking journeys instead of relying entirely on manual enquiries.',
+    solution:
+      'Developed a business-focused booking platform with service discovery and appointment-oriented workflows. Confirm the exact production management modules before expanding this description.',
+    role: 'Web application development; confirm specific ownership and responsibilities',
+    stack: [], // TODO: Confirm from repository
+    features: [
+      'Spa, salon and beauty service discovery',
+      'Booking-oriented customer experience',
+      'Business and service presentation',
+      'Responsive web interface',
+    ],
+    screenshots: [],
+    liveUrl: 'https://bookby247.com/',
+    featured: true,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-workspa',
+    slug: 'workspa-spa-recruitment',
+    title: 'WorkSpa – Spa Jobs & Recruitment',
+    category: 'full-stack',
+    categoryLabel: 'Full-Stack Applications',
+    year: '2026', // TODO: Confirm launch year
+    clientType: 'Recruitment & Spa Industry',
+    shortSummary:
+      'A live recruitment platform connecting spa and wellness employers with job seekers through searchable job listings and application journeys.',
+    businessProblem:
+      'Spa businesses need to reach suitable candidates, while job seekers need role- and location-specific vacancies in one place.',
+    solution:
+      'Created a sector-focused jobs experience with role and location discovery, vacancy details and candidate-facing application pathways.',
+    role: 'Web application development; confirm specific responsibilities',
+    stack: ['React', 'Node.js', 'MongoDB'], // Based on previously discussed SPA jobs project; verify this is the deployed WorkSpa stack
+    features: [
+      'Job listings and detail pages',
+      'Role and location-based job discovery',
+      'Spa therapist, receptionist and management job categories',
+      'Candidate application journeys',
+      'Employer-facing recruitment information',
+    ],
+    screenshots: [],
+    liveUrl: 'https://workspa.in/',
+    featured: true,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-disha-attendance',
+    slug: 'disha-employee-attendance-crm',
+    title: 'Disha Online Solution – Employee Attendance CRM',
+    category: 'full-stack',
+    categoryLabel: 'Full-Stack Applications',
+    year: '2026', // TODO: Confirm year
+    clientType: 'Internal Company Operations',
+    shortSummary:
+      'An employee attendance management system designed for company attendance records, biometric punch integration and operational visibility.',
+    businessProblem:
+      'Organizations using attendance devices need a consistent way to associate device punches with employees and review attendance records.',
+    solution:
+      'Developed an attendance application with employee mapping, device data synchronization and attendance management workflows.',
+    role: 'Backend, integration and deployment engineering; confirm final project scope',
+    stack: ['Python', 'Django', 'SQL Server', 'WebSockets'], // Based on previously discussed attendance system; verify repository
+    features: [
+      'Employee attendance records',
+      'Biometric device punch synchronization',
+      'Employee and device identity mapping',
+      'Attendance history and reporting workflows',
+      'Real-time attendance updates where enabled',
+    ],
+    screenshots: [],
+    // Source repository is provided below in a comment because ProjectItem's
+    // original type does not advertise a sourceUrl or githubUrl field.
+    // GitHub: https://github.com/bkbimal250/hrpayroll#employee-attendance-system
+    isPrivate: true,
+    privateNote: 'Company attendance application; public source reference available, but production access is not listed.',
+    featured: true,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-internal-chat',
+    slug: 'internal-business-chat-application',
+    title: 'Internal Chat – Business Messaging Application',
+    category: 'full-stack',
+    categoryLabel: 'Full-Stack Applications',
+    year: '2026', // TODO: Confirm year
+    clientType: 'Internal Team Communication',
+    shortSummary:
+      'An internal chat application project focused on communication between team members.',
+    businessProblem:
+      'Teams need a dedicated space for work-related conversations and coordination.',
+    solution:
+      'Developed an internal messaging application. Confirm the deployed architecture and supported chat features from the repository before publishing detailed claims.',
+    role: 'Application development; confirm exact responsibilities',
+    stack: [], // TODO: Verify from GitHub repository
+    features: [
+      'Internal team messaging workflow',
+      'Business-focused communication interface',
+    ],
+    screenshots: [],
+    // GitHub: https://github.com/bkbimal250/internal_chat_app
+    isPrivate: true,
+    privateNote: 'Internal application; repository provided, public deployment not confirmed.',
+    featured: true,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-pixinit',
+    slug: 'pixinit-ssd-testing-utility',
+    title: 'PIXINIT – SSD & NVMe Testing Utility',
+    category: 'full-stack', // Compatibility fallback; ideally use a new 'desktop' category
+    categoryLabel: 'Desktop Applications',
+    year: '2026', // TODO: Confirm release year
+    clientType: 'Windows Desktop Utility',
+    shortSummary:
+      'A Windows desktop utility project for SSD health information and storage performance benchmarking.',
+    businessProblem:
+      'Users need understandable SSD health information and repeatable storage performance tests without manually combining multiple utilities.',
+    solution:
+      'Built a desktop-oriented workflow for reviewing drive information and running sequential and random storage benchmark tests.',
+    role: 'Desktop application development and benchmarking implementation',
+    stack: ['C#', 'WPF', '.NET'], // Confirm current target framework and release details
+    features: [
+      'SSD and NVMe information display',
+      'Sequential read and write benchmark workflows',
+      'Random read and write benchmark workflows',
+      'Benchmark results presentation',
+    ],
+    screenshots: [],
+    // GitHub: https://github.com/bkbimal250/ssdtestingapp/blob/main/README.md
+    featured: true,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-bimalglobal',
+    slug: 'bimal-global-corporate-website',
+    title: 'Bimal Global – Corporate Website',
     category: 'websites',
     categoryLabel: 'Websites',
-    year: '2026',
-    clientType: 'Sample Corporate Engagement',
+    year: '2026', // TODO: Confirm launch year
+    clientType: 'Own Business Website',
     shortSummary:
-      'Placeholder case study for a high-clarity corporate website with structured service pages, technical SEO, and server-validated enquiry routing.',
+      'The official Bimal Global website showcasing web development, digital services and business enquiry channels.',
     businessProblem:
-      'Placeholder problem statement: Replace with the real challenge—such as an outdated brochure site, slow mobile load times, or unvalidated contact forms missing lead attribution.',
+      'A growing digital services business needs a clear online presence that explains its offerings and captures enquiries.',
     solution:
-      'Placeholder engineering solution: Describe the semantic page hierarchy, static generation strategy, accessible color tokens, and protected enquiry API integration.',
-    role: 'Information architecture, visual design, frontend engineering, and SEO setup',
-    stack: ['Next.js', 'React', 'TypeScript', 'Tailwind CSS', 'Google Apps Script'],
+      'Created a responsive business website with service information and contact enquiry functionality.',
+    role: 'Website development and maintenance',
+    stack: ['React', 'Vite', 'TypeScript'], // Based on the existing project described in this conversation
     features: [
-      'Modular content files separated cleanly from presentation components',
-      'Per-route Open Graph metadata, sitemap, and Schema.org structured data',
-      'Server-side enquiry validation with spam protection and sheet sync',
+      'Business service presentation',
+      'Responsive website experience',
+      'Contact enquiry form',
+      'Deployment on Vercel',
     ],
-    screenshots: [
-      {
-        src: '/images/projects/sample-corporate-home.png',
-        alt: 'Placeholder frame for corporate marketing homepage layout',
-        caption: 'Editorial homepage hierarchy and service overview (replace with real capture)',
-        aspect: '16:10',
-      },
-    ],
-    liveUrl: 'https://bimalglobal.com',
-    featured: true,
-    isPlaceholder: true,
-  },
-  {
-    id: 'proj-sample-mobile',
-    slug: 'field-inspection-mobile-app-template',
-    title: 'Field Inspection Companion App (Sample Case Study)',
-    category: 'mobile',
-    categoryLabel: 'Mobile Apps',
-    year: '2026',
-    clientType: 'Sample Field Operations Engagement',
-    shortSummary:
-      'Placeholder case study for an offline-capable mobile application supporting structured field checklists and deferred background sync.',
-    businessProblem:
-      'Placeholder problem statement: Replace with real field constraints—such as unreliable site connectivity, paper checklists, or delayed reporting back to headquarters.',
-    solution:
-      'Placeholder engineering solution: Outline local-first storage, conflict-safe synchronization queues, and large touch-friendly inspection controls.',
-    role: 'Mobile UX architecture, cross-platform development, and API sync layer',
-    stack: ['React Native', 'TypeScript', 'Expo', 'SQLite', 'REST API'],
-    features: [
-      'Offline checklist capture with local persistence queue',
-      'Structured photo attachment metadata and timestamping',
-      'Automatic background retry when connectivity resumes',
-    ],
-    screenshots: [
-      {
-        src: '/images/projects/sample-mobile-screens.png',
-        alt: 'Placeholder frame for mobile inspection workflow screens',
-        caption: 'Offline checklist capture and sync queue view (replace with real capture)',
-        aspect: '16:10',
-      },
-    ],
-    isPrivate: true,
-    privateNote: 'Enterprise distribution build — source and binary remain private.',
-    featured: true,
-    isPlaceholder: true,
-  },
-  {
-    id: 'proj-sample-design-system',
-    slug: 'multi-theme-design-system-template',
-    title: 'Tokenized Multi-Brand UI System (Sample Case Study)',
-    category: 'ui-ux',
-    categoryLabel: 'UI/UX',
-    year: '2026',
-    clientType: 'Sample Product Design Engagement',
-    shortSummary:
-      'Placeholder case study for a unified component library and CSS variable token architecture supporting accessible light and dark palettes.',
-    businessProblem:
-      'Placeholder problem statement: Replace with real design debt challenges—such as inconsistent form controls, contrast failures, or duplicated UI code across products.',
-    solution:
-      'Placeholder engineering solution: Summarize the semantic token matrix, Radix UI accessible primitives, and documented component states delivered to the product team.',
-    role: 'Design tokens, accessibility audit, and component library engineering',
-    stack: ['Figma', 'Tailwind CSS', 'Radix UI', 'TypeScript', 'WCAG 2.2 AA'],
-    features: [
-      'Semantic background, surface, border, and foreground contrast tokens',
-      'Keyboard-navigable dialogs, selects, and validated form controls',
-      'Reduced-motion safe transitions and consistent spacing scale',
-    ],
-    screenshots: [
-      {
-        src: '/images/projects/sample-ui-system.png',
-        alt: 'Placeholder frame for component library and token documentation',
-        caption: 'Token matrix and interactive form component states (replace with real capture)',
-        aspect: '16:10',
-      },
-    ],
+    screenshots: [],
+    liveUrl: 'https://bimalglobal.com/',
     featured: false,
-    isPlaceholder: true,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-royal-oaks-thane',
+    slug: 'royal-oaks-spa-thane-website',
+    title: 'Royal Oaks Spa Thane – Business Website',
+    category: 'websites',
+    categoryLabel: 'Websites',
+    year: '2026', // TODO: Confirm launch year
+    clientType: 'Spa Business – India',
+    shortSummary:
+      'A spa business website for Royal Oaks Spa Thane, part of the wider collection of wellness websites developed for Indian businesses.',
+    businessProblem:
+      'A local spa business needs a discoverable website to present its brand, services and contact information.',
+    solution:
+      'Delivered a dedicated spa web presence. Verify the live page content and current features before adding detailed claims.',
+    role: 'Website development; confirm project scope',
+    stack: [], // TODO: Confirm
+    features: [
+      'Dedicated spa business website',
+      'Brand and service presentation',
+      'Customer contact journey',
+    ],
+    screenshots: [],
+    liveUrl: 'https://royaloakspathane.com/',
+    // Alternate domain supplied by owner: https://royaloakspathane.in/
+    featured: false,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-manchester-spa-dubai',
+    slug: 'manchester-spa-dubai-website',
+    title: 'Manchester Spa Dubai – Business Website',
+    category: 'websites',
+    categoryLabel: 'Websites',
+    year: '2026', // TODO: Confirm launch year
+    clientType: 'Spa Business – Dubai, UAE',
+    shortSummary:
+      'A spa and wellness business website serving customers in Dubai, showcasing services and customer contact options.',
+    businessProblem:
+      'A spa business in a competitive local market needs an online destination for service discovery and customer enquiries.',
+    solution:
+      'Developed a spa-focused marketing website with business information and enquiry-oriented calls to action.',
+    role: 'Website development; confirm project scope',
+    stack: [], // TODO: Confirm
+    features: [
+      'Spa service presentation',
+      'Business information and contact pathways',
+      'Customer enquiry or booking calls to action',
+    ],
+    screenshots: [],
+    liveUrl: 'https://www.manchesterspadubai.com/',
+    featured: false,
+    isPlaceholder: false,
+  },
+  {
+    id: 'proj-royal-bliss-dubai',
+    slug: 'royal-bliss-spa-dubai-website',
+    title: 'Royal Bliss Spa Dubai – Wellness Landing Page',
+    category: 'websites',
+    categoryLabel: 'Websites',
+    year: '2026', // TODO: Confirm launch year
+    clientType: 'Spa Business – Dubai, UAE',
+    shortSummary:
+      'A Dubai-focused spa landing page presenting wellness services and customer booking or contact options.',
+    businessProblem:
+      'A local wellness business needs a clear digital page for prospective customers searching for spa services in Dubai.',
+    solution:
+      'Created a focused spa service page with treatment information and customer enquiry pathways.',
+    role: 'Website development; confirm project scope',
+    stack: [], // TODO: Confirm
+    features: [
+      'Spa and wellness service content',
+      'Location-oriented service landing page',
+      'Customer contact and booking calls to action',
+    ],
+    screenshots: [],
+    liveUrl: 'https://royalblissspa.com/spa-in-dubai/',
+    featured: false,
+    isPlaceholder: false,
   },
 ];
